@@ -3,9 +3,18 @@ import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
 
-def show_image(image: np.ndarray, grid: bool = True) -> None:
+def show_image(
+    image: np.ndarray, 
+    grid: bool = True, 
+    padding: bool = False
+) -> None:
+    
+    if padding:
+        image = np.pad(image, 6, mode='constant', constant_values=1)
 
     plt.imshow(image, cmap="gray")
+    plt.xticks([])
+    plt.yticks([])
     
     if grid:
 
@@ -97,13 +106,10 @@ def polynomial_division(X: list, Y: list) -> list:
 
 if __name__ == "__main__":
 
-    '''
     INPUT = input(
         "Enter input: "
     )
-    '''
 
-    INPUT = "https://www.qrcode.com/"
     output = ""
 
     # ========================================================
@@ -139,11 +145,8 @@ if __name__ == "__main__":
     temp = capacities[MODE] >= INPUT_LEN
     temp = capacities[temp].sort_values(by=MODE)
     
-    # VERSION = temp["VERSION"].iloc[0]
-    # ECLEVEL = temp["ECLEVEL"].iloc[0]
-
-    VERSION = 2
-    ECLEVEL = "M"
+    VERSION = temp["VERSION"].iloc[0]
+    ECLEVEL = temp["ECLEVEL"].iloc[0]
 
     print("Selecte version: %s" % VERSION)
     print("Selected ec level: %s" % ECLEVEL)
@@ -460,8 +463,6 @@ if __name__ == "__main__":
 
         i += 1
 
-    show_image(image)
-
     # ========================================================
 
     MASKS = [
@@ -478,7 +479,7 @@ if __name__ == "__main__":
     min_score = np.inf
     opt_mask = -1
 
-    for i, mask in enumerate( MASKS):
+    for i, mask in enumerate(MASKS):
 
         flags = np.array(
             [
@@ -499,8 +500,7 @@ if __name__ == "__main__":
             min_score = score
             opt_mask = i
 
-    # MASK = opt_mask
-    MASK = 2
+    MASK = opt_mask
 
     flags = np.array([
         [
@@ -511,8 +511,6 @@ if __name__ == "__main__":
     ])
 
     image = np.logical_xor(image, flags)
-
-    show_image(image)
 
     # ========================================================
 
@@ -543,8 +541,34 @@ if __name__ == "__main__":
 
     image[SIZE-7:, 8] = FORMAT[6::-1]
     image[8, SIZE-8:] = FORMAT[7:]
+
+    if VERSION >= 7:
+
+        format_info = pd.read_csv(
+            "tables/version_info.csv",
+            sep = ' ',
+            dtype=str
+        )
+
+        temp = format_info["VERSION"] == str(VERSION)
+        temp = format_info[temp]
+        
+        FORMAT = np.array(
+            list(
+                map(
+                    lambda x: x=='0',
+                    str(temp["BITS"].iloc[0])
+                )
+            )[::-1]
+        )
+
+        FORMAT = FORMAT.reshape(6, 3)
+        image[-11:-8, :6] = FORMAT.T
+        image[:6, -11:-8] = FORMAT
     
-    show_image(image, grid=False)
+    # ========================================================
+    
+    show_image(image, grid=False, padding=True)
 
 
 
